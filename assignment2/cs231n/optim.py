@@ -56,8 +56,8 @@ def sgd_momentum(w, dw, config=None):
       moving average of the gradients.
     """
     if config is None: config = {}
-    config.setdefault('learning_rate', 1e-2)
-    config.setdefault('momentum', 0.9)
+    learning_rate = config.setdefault('learning_rate', 1e-2)
+    mu = config.setdefault('momentum', 0.9)
     v = config.get('velocity', np.zeros_like(w))
 
     next_w = None
@@ -65,7 +65,9 @@ def sgd_momentum(w, dw, config=None):
     # TODO: Implement the momentum update formula. Store the updated value in #
     # the next_w variable. You should also use and update the velocity v.     #
     ###########################################################################
-    pass
+    v = mu * v - learning_rate * dw  # integrate velocity
+    next_w = w + v  # integrate position
+
     ###########################################################################
     #                             END OF YOUR CODE                            #
     ###########################################################################
@@ -75,7 +77,7 @@ def sgd_momentum(w, dw, config=None):
 
 
 
-def rmsprop(w, dw, config=None):
+def rmsprop(x, dx, config=None):
     """
     Uses the RMSProp update rule, which uses a moving average of squared
     gradient values to set adaptive per-parameter learning rates.
@@ -88,10 +90,10 @@ def rmsprop(w, dw, config=None):
     - cache: Moving average of second moments of gradients.
     """
     if config is None: config = {}
-    config.setdefault('learning_rate', 1e-2)
-    config.setdefault('decay_rate', 0.99)
-    config.setdefault('epsilon', 1e-8)
-    config.setdefault('cache', np.zeros_like(w))
+    learning_rate = config.setdefault('learning_rate', 1e-2)
+    decay_rate = config.setdefault('decay_rate', 0.99)
+    epsilon = config.setdefault('epsilon', 1e-8)
+    cache = config.setdefault('cache', np.zeros_like(x))
 
     next_w = None
     ###########################################################################
@@ -99,15 +101,18 @@ def rmsprop(w, dw, config=None):
     # in the next_w variable. Don't forget to update cache value stored in    #
     # config['cache'].                                                        #
     ###########################################################################
-    pass
+    cache = decay_rate * cache + (1 - decay_rate) * dx ** 2
+    next_x = x - learning_rate * dx / (np.sqrt(cache) + epsilon)
+
+    config['cache'] = cache
     ###########################################################################
     #                             END OF YOUR CODE                            #
     ###########################################################################
 
-    return next_w, config
+    return next_x, config
 
 
-def adam(w, dw, config=None):
+def adam(x, dx, config=None):
     """
     Uses the Adam update rule, which incorporates moving averages of both the
     gradient and its square and a bias correction term.
@@ -122,15 +127,15 @@ def adam(w, dw, config=None):
     - t: Iteration number.
     """
     if config is None: config = {}
-    config.setdefault('learning_rate', 1e-3)
-    config.setdefault('beta1', 0.9)
-    config.setdefault('beta2', 0.999)
-    config.setdefault('epsilon', 1e-8)
-    config.setdefault('m', np.zeros_like(w))
-    config.setdefault('v', np.zeros_like(w))
-    config.setdefault('t', 0)
+    learning_rate = config.setdefault('learning_rate', 1e-3)
+    beta1 = config.setdefault('beta1', 0.9)
+    beta2 = config.setdefault('beta2', 0.999)
+    epsilon = config.setdefault('epsilon', 1e-8)
+    m = config.setdefault('m', np.zeros_like(x))
+    v = config.setdefault('v', np.zeros_like(x))
+    t = config.setdefault('t', 0)
 
-    next_w = None
+    next_x = None
     ###########################################################################
     # TODO: Implement the Adam update formula, storing the next value of w in #
     # the next_w variable. Don't forget to update the m, v, and t variables   #
@@ -139,9 +144,18 @@ def adam(w, dw, config=None):
     # NOTE: In order to match the reference output, please modify t _before_  #
     # using it in any calculations.                                           #
     ###########################################################################
-    pass
+    t += 1
+    m = beta1 * m + (1 - beta1) * dx
+    mt = m / (1 - beta1 ** t)
+    v = beta2 * v + (1 - beta2) * (dx ** 2)
+    vt = v / (1 - beta2 ** t)
+    next_x = x - learning_rate * mt / (np.sqrt(vt) + epsilon)
+
+    config['t'] = t
+    config['m'] = m
+    config['v'] = v
     ###########################################################################
     #                             END OF YOUR CODE                            #
     ###########################################################################
 
-    return next_w, config
+    return next_x, config
